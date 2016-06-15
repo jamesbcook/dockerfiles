@@ -1,0 +1,31 @@
+version: '2'
+services:
+        lair:
+                build:
+                        context: ./app/
+                        dockerfile: Dockerfile
+                network_mode: "bridge"
+                external_links:
+                        - mongodb:mongo
+        lairapi:
+                build:
+                        context: ./api/
+                        dockerfile: Dockerfile
+                network_mode: "bridge"
+                external_links:
+                        - mongodb:mongo
+        caddy:
+                build:
+                        context: ./proxy/
+                        dockerfile: Dockerfile
+                links:
+                        - lair
+                        - lairapi
+                ports:
+                        - 11013:11013
+                depends_on:
+                        - lair
+                        - lairapi
+                network_mode: "bridge"
+                external_links:
+                        - mongodb:mongo

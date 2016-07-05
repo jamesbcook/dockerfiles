@@ -1,0 +1,43 @@
+version: '2'
+services:
+        mysqldb:
+                image: mysql:5.7
+                environment:
+                        - MYSQL_ROOT_PASSWORD=Funt1me!
+                        - MYSQL_USER=pf_dev
+                        - MYSQL_PASSWORD=password
+                        - MYSQL_DATABASE=pf_dev
+        redisdb:
+                image: redis:3.2.1-alpine
+        app:
+                build:
+                        context: ./app/
+                        dockerfile: Dockerfile
+                depends_on:
+                        - mysqldb
+                        - redisdb
+                links:
+                        - mysqldb
+                        - redisdb
+                ports:
+                        - "80:80"
+                environment:
+                        - REDIS_URL=redis://redisdb:6379
+                volumes:
+                        - /var/www/phishing-frenzy
+                        - /usr/local/bundle/
+        sidekiq:
+                image: ruby:2.3
+                working_dir: /var/www/phishing-frenzy/
+                command: ["sidekiq", "-C", "config/sidekiq.yml"]
+                depends_on:
+                        - redisdb
+                        - mysqldb
+                        - app
+                links:
+                        - mysqldb
+                        - redisdb
+                environment:
+                        - REDIS_URL=redis://redisdb:6379
+                volumes_from:
+                        - app

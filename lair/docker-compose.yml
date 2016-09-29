@@ -1,19 +1,30 @@
 version: '2'
 services:
+        databaseData:
+               image: mongo:3.3
+               entrypoint: /bin/bash
+        database:
+               image: mongo:3.3
+               volumes_from:
+                      - databaseData
+               command: mongod --dbpath=/data/db --bind_ip=database --quiet --nounixsocket --replSet rs0
         lair:
                 build:
                         context: ./app/
                         dockerfile: Dockerfile
-                network_mode: "bridge"
-                external_links:
-                        - mongodb:mongo
+                links:
+                       - database
+                depends_on:
+                       - database
+                       - lairapi
         lairapi:
                 build:
                         context: ./api/
                         dockerfile: Dockerfile
-                network_mode: "bridge"
-                external_links:
-                        - mongodb:mongo
+                links:
+                       - database
+                depends_on:
+                       -  database
         caddy:
                 build:
                         context: ./proxy/
@@ -21,11 +32,10 @@ services:
                 links:
                         - lair
                         - lairapi
+                        - database
                 ports:
                         - 11013:11013
                 depends_on:
                         - lair
                         - lairapi
-                network_mode: "bridge"
-                external_links:
-                        - mongodb:mongo
+                        - database

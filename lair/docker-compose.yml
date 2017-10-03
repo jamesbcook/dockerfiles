@@ -3,6 +3,8 @@ services:
         databaseData:
                image: mongo:3.3
                entrypoint: /bin/bash
+               volumes:
+                       - $HOME/.lair/mongodb/data/db:/data/db
         database:
                image: mongo:3.3
                volumes_from:
